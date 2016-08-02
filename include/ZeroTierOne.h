@@ -31,12 +31,27 @@
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <Windows.h>
-#else /* not Windows */
+#endif /* Windows */
+
+#if defined(__UNIX_LIKE__)
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#endif /* Windows or not */
+#endif /* __UNIX_LIKE__ */
+
+#if defined(__GENODE__)
+#include <machine/endian.h>
+#include <lwip/inet.h>
+#include <lwip/sockets.h>
+
+#define inet_ntop(af,src,dst,size) \
+    (((af) == AF_INET6) ? ip6addr_ntoa_r((const ip6_addr_t*)(src),(dst),(size)) \
+     : (((af) == AF_INET) ? ip4addr_ntoa_r((const ip4_addr_t*)(src),(dst),(size)) : NULL))
+#define inet_pton(af,src,dst) \
+    (((af) == AF_INET6) ? ip6addr_aton((src),(ip6_addr_t*)(dst)) \
+     : (((af) == AF_INET) ? ip4addr_aton((src),(ip4_addr_t*)(dst)) : 0))
+#endif /* __GENODE__ */
 
 #ifdef __cplusplus
 extern "C" {

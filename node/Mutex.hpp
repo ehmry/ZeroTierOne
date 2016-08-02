@@ -183,4 +183,24 @@ private:
 
 #endif // _WIN32
 
+
+#ifdef __GENODE__
+
+#include <base/lock.h>
+
+namespace ZeroTier {
+
+struct Mutex : public Genode::Lock, NonCopyable
+{
+	struct Lock : Genode::Lock::Guard, NonCopyable
+	{
+		Lock(Mutex &m) : Genode::Lock::Guard(m) { }
+		Lock(const Mutex &m) : Genode::Lock::Guard(*(const_cast<Mutex *>(&m))) { }
+	};
+};
+
+} // namespace ZeroTier
+
+#endif // __GENODE__
+
 #endif

@@ -45,7 +45,9 @@ private:
 
 } // namespace ZeroTier
 
-#else // !__WINDOWS__
+#endif // __WINDOWS__
+
+#ifdef __UNIX_LIKE__
 
 #include <pthread.h>
 
@@ -92,6 +94,23 @@ private:
 
 } // namespace ZeroTier
 
-#endif // !__WINDOWS__
+#endif // __UNIX_LIKE__
+
+#ifdef __GENODE__
+
+#include <base/semaphore.h>
+
+namespace ZeroTier {
+
+struct BinarySemaphore : Genode::Lock, NonCopyable
+{
+	inline void wait() {   lock(); }
+	inline void post() { unlock(); }
+};
+
+
+} // namespace ZeroTier
+
+#endif // __GENODE__
 
 #endif

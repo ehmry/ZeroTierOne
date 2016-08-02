@@ -85,6 +85,11 @@
 #endif
 #endif
 
+// Genode provides a modified FreeBSD libc, but is not considered Unix-like
+#ifdef __GENODE__
+#undef __UNIX_LIKE__
+#endif
+
 #if defined(_WIN32) || defined(_WIN64)
 #ifndef __WINDOWS__
 #define __WINDOWS__
@@ -114,7 +119,7 @@
 #define __BYTE_ORDER 1234
 #endif
 
-#ifdef __UNIX_LIKE__
+#if defined(__UNIX_LIKE__) || defined(__GENODE__)
 #define ZT_PATH_SEPARATOR '/'
 #define ZT_PATH_SEPARATOR_S "/"
 #define ZT_EOL_S "\n"

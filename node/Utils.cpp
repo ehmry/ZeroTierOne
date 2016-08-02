@@ -39,6 +39,12 @@
 #include <wincrypt.h>
 #endif
 
+#ifdef __GENODE__
+namespace Jitter { extern "C" {
+#include <jitterentropy.h>
+} }
+#endif
+
 #include "Utils.hpp"
 #include "Mutex.hpp"
 #include "Salsa20.hpp"
@@ -164,7 +170,7 @@ void Utils::getSecureRandom(void *buf,unsigned int bytes)
 		s20.init(s20Key,256,s20Key);
 	}
 
-#ifdef __WINDOWS__
+#if defined(__WINDOWS__)
 
 	static HCRYPTPROV cryptProvider = NULL;
 
@@ -180,7 +186,8 @@ void Utils::getSecureRandom(void *buf,unsigned int bytes)
 		exit(1);
 	}
 
-#else // not __WINDOWS__
+#endif /* Windows */
+#if defined(__UNIX_LIKE__)
 
 	static char randomBuf[131072];
 	static unsigned int randomPtr = sizeof(randomBuf);
@@ -213,7 +220,31 @@ void Utils::getSecureRandom(void *buf,unsigned int bytes)
 		((char *)buf)[i] = randomBuf[randomPtr++];
 	}
 
-#endif // __WINDOWS__ or not
+#endif // __UNIX_LIKE__
+#if defined(__GENODE__)
+	using namespace Jitter;
+
+	static bool jitterInitialized = false;
+	static struct rand_data *ec;
+
+	if (!jitterInitialized) {
+		jent_entropy_init();
+		ec = jent_entropy_collector_alloc(0,0);
+		jitterInitialized = true;
+	}
+
+	{
+		ssize_t remain = bytes;
+		ssize_t off = 0;
+		char *dst = (char*)buf;
+		while (remain) {
+			ssize_t n = jent_read_entropy(ec, &dst[off], remain);
+			remain -= n;
+			off += n;
+		}
+	}
+
+#endif
 
 	s20.encrypt12(buf,buf,bytes);
 }
